@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>リハスクエアかのん開国橋 通所介護リハビリオーダー入力システム</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>リハスクエアかのん開国橋 通所介護リハビリオーダー入力システム</h1>
+    </header>
+
+    <main>
+        <div class="controls">
+            <input type="search" id="searchInput" placeholder="利用者氏名で検索">
+            <button id="searchBtn">検索</button>
+            <button id="clearBtn">クリア</button>
+            <div id="searchResults"></div>
+        </div>
+
+        <form id="orderForm">
+            <fieldset>
+                <legend>① 利用者基本情報</legend>
+                <div class="form-group">
+                    <label for="userName">利用者氏名:</label>
+                    <input type="text" id="userName" required>
+                </div>
+                <div class="form-group">
+                    <label for="careLevel">介護度:</label>
+                    <select id="careLevel">
+                        <option value="要支援1">要支援1</option>
+                        <option value="要支援2">要支援2</option>
+                        <option value="要介護1">要介護1</option>
+                        <option value="要介護2">要介護2</option>
+                        <option value="要介護3">要介護3</option>
+                        <option value="要介護4">要介護4</option>
+                        <option value="要介護5">要介護5</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="careManager">担当ケアマネ:</label>
+                    <input type="text" id="careManager">
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend>② 主疾患（複数チェック）</legend>
+                <div class="checkbox-group">
+                    <label><input type="checkbox" name="disease" value="脳血管疾患"> 脳血管疾患</label>
+                    <label><input type="checkbox" name="disease" value="運動器疾患"> 運動器疾患</label>
+                    <label><input type="checkbox" name="disease" value="神経系疾患"> 神経系疾患</label>
+                    <label><input type="checkbox" name="disease" value="糖尿病"> 糖尿病</label>
+                    <label><input type="checkbox" name="disease" value="高血圧"> 高血圧</label>
+                    <label><input type="checkbox" name="disease" value="便秘症"> 便秘症</label>
+                    <label><input type="checkbox" name="disease" value="呼吸器疾患"> 呼吸器疾患</label>
+                    <label><input type="checkbox" name="disease" value="頻尿・尿漏れ"> 頻尿・尿漏れ</label>
+                    <label>その他: <input type="text" id="diseaseOther"></label>
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend>③ 症状</legend>
+                <div class="symptom-group">
+                    <p>麻痺:</p>
+                    <label><input type="checkbox" name="paralysis" value="右手"> 右手</label>
+                    <label><input type="checkbox" name="paralysis" value="左手"> 左手</label>
+                    <label><input type="checkbox" name="paralysis" value="右足"> 右足</label>
+                    <label><input type="checkbox" name="paralysis" value="左足"> 左足</label>
+                </div>
+                <div class="symptom-group">
+                    <p>痛み:</p>
+                    <label><input type="checkbox" name="pain" value="頚部"> 頚部</label>
+                    <label><input type="checkbox" name="pain" value="肩"> 肩</label>
+                    <label><input type="checkbox" name="pain" value="肘"> 肘</label>
+                    <label><input type="checkbox" name="pain" value="手首"> 手首</label>
+                    <label><input type="checkbox" name="pain" value="腰部"> 腰部</label>
+                    <label><input type="checkbox" name="pain" value="股関節"> 股関節</label>
+                    <label><input type="checkbox" name="pain" value="膝"> 膝</label>
+                    <label><input type="checkbox" name="pain" value="足首"> 足首</label>
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend>④ 医師からの運動制限</legend>
+                <div class="radio-group" id="exerciseRestriction">
+                    <label><input type="radio" name="restriction" value="あり"> あり</label>
+                    <label><input type="radio" name="restriction" value="なし" checked> なし</label>
+                    <label><input type="radio" name="restriction" value="わからない"> わからない</label>
+                </div>
+                <div class="form-group" id="restrictionDetailsContainer" style="display: none;">
+                    <label for="restrictionDetails">制限内容:</label>
+                    <textarea id="restrictionDetails" rows="3"></textarea>
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend>⑤ 目標</legend>
+                <table id="goalTable">
+                    <thead>
+                        <tr>
+                            <th>チェック</th>
+                            <th>コース</th>
+                            <th>目標</th>
+                            <th>優先順位</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><input type="checkbox" name="goal" value="バランスアップ・転倒予防コース"></td>
+                            <td>バランスアップ・転倒予防コース</td>
+                            <td>転ばない体をつくりたい</td>
+                            <td><input type="number" min="1" max="3" class="priority-input"></td>
+                        </tr>
+                        <tr>
+                            <td><input type="checkbox" name="goal" value="歩行能力向上コース"></td>
+                            <td>歩行能力向上コース</td>
+                            <td>歩く力を良くしたい</td>
+                            <td><input type="number" min="1" max="3" class="priority-input"></td>
+                        </tr>
+                        <tr>
+                            <td><input type="checkbox" name="goal" value="立ち座り強化コース"></td>
+                            <td>立ち座り強化コース</td>
+                            <td>立ち上がりを楽にしたい</td>
+                            <td><input type="number" min="1" max="3" class="priority-input"></td>
+                        </tr>
+                         <tr>
+                            <td><input type="checkbox" name="goal" value="体力・活動性向上コース"></td>
+                            <td>体力・活動性向上コース</td>
+                            <td>体力・筋力をつけたい</td>
+                            <td><input type="number" min="1" max="3" class="priority-input"></td>
+                        </tr>
+                        <tr>
+                            <td><input type="checkbox" name="goal" value="手指巧緻性アップコース"></td>
+                            <td>手指巧緻性アップコース</td>
+                            <td>手先を動かしたい</td>
+                            <td><input type="number" min="1" max="3" class="priority-input"></td>
+                        </tr>
+                        <tr>
+                            <td><input type="checkbox" name="goal" value="応用歩行強化コース"></td>
+                            <td>応用歩行強化コース</td>
+                            <td>階段昇降や屋外歩行</td>
+                            <td><input type="number" min="1" max="3" class="priority-input"></td>
+                        </tr>
+                        <tr>
+                            <td><input type="checkbox" name="goal" value="家事動作練習コース"></td>
+                            <td>家事動作練習コース</td>
+                            <td>家事を続けたい</td>
+                            <td><input type="number" min="1" max="3" class="priority-input"></td>
+                        </tr>
+                        <tr>
+                            <td><input type="checkbox" name="goal" value="脳トレ強化コース"></td>
+                            <td>脳トレ強化コース</td>
+                            <td>物忘れを予防したい</td>
+                            <td><input type="number" min="1" max="3" class="priority-input"></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="form-group">
+                    <label for="goalOther">その他:</label>
+                    <textarea id="goalOther" rows="3"></textarea>
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend>⑥ 情報共有事項</legend>
+                <textarea id="infoSharing" rows="4" placeholder="例：性格、拒否傾向、集団苦手など"></textarea>
+            </fieldset>
+
+            <fieldset>
+                <legend>⑦ 職員記入欄</legend>
+                <textarea id="staffNotes" rows="4"></textarea>
+            </fieldset>
+
+            <div class="form-actions">
+                <button type="submit" id="saveBtn">保存</button>
+                <button type="button" id="deleteBtn" style="display:none;">削除</button>
+                <button type="button" id="exportCsvBtn">CSV出力</button>
+            </div>
+        </form>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 リハスクエアかのん開国橋</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
