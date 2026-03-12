@@ -1,0 +1,703 @@
+
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>リハスクエアかのん開国橋 - リハビリオーダーシート</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- メインメニュー画面 (初期画面) -->
+    <section id="menu-screen" class="screen">
+        <div class="login-container">
+            <h1>リハスクエアかのん開国橋</h1>
+            <div class="menu-grid">
+                <button class="btn-main btn-new" onclick="app.showOrderForm(true)">
+                    <span>＋</span><br>新規オーダー作成
+                </button>
+                <button class="btn-main btn-search" onclick="app.requestListAccess()">
+                    <span>🔍</span><br>登録済み利用者検索
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- パスワード入力モーダル (登録済み検索時のみ表示) -->
+    <div id="password-modal" class="modal hidden">
+        <div class="modal-content">
+            <h3>パスワードを入力してください</h3>
+            <input type="password" id="list-pass" placeholder="パスワード">
+            <div class="modal-btns">
+                <button onclick="app.checkListPassword()">確認</button>
+                <button class="btn-cancel" onclick="app.closeModal()">キャンセル</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 利用者一覧画面 (パスワード後) -->
+    <section id="list-screen" class="screen hidden">
+        <header>
+            <button onclick="app.showMenu()">メニューに戻る</button>
+            <h1>利用者検索・一覧</h1>
+        </header>
+        <div class="search-bar">
+            <input type="text" id="search-input" placeholder="氏名で検索..." oninput="app.renderList()">
+        </div>
+        <div id="user-list-container">
+            <!-- 利用者リストがここに表示される -->
+        </div>
+        <div class="global-actions">
+            <button class="btn-csv" onclick="app.exportAllCSV()">全データCSV出力</button>
+        </div>
+    </section>
+
+    <!-- 利用者カルテ画面 (履歴) -->
+    <section id="chart-screen" class="screen hidden">
+        <header>
+            <button onclick="app.showList()">戻る</button>
+            <h1 id="chart-user-name">利用者カルテ</h1>
+        </header>
+        <div id="user-info-summary" class="card"></div>
+        <h3>リハビリオーダー履歴</h3>
+        <div id="history-container"></div>
+        <div class="chart-actions">
+            <button class="btn-new" onclick="app.showOrderForm(true)">新しいオーダーを作成</button>
+        </div>
+    </section>
+
+    <!-- リハビリオーダー入力画面 -->
+    <section id="order-screen" class="screen hidden">
+        <header class="no-print">
+            <button onclick="app.backFromOrder()">キャンセル</button>
+            <h1>リハビリオーダーシート</h1>
+        </header>
+
+        <div class="print-header only-print">
+            <h1>リハスクエアかのん開国橋</h1>
+            <h2>リハビリオーダーシート</h2>
+        </div>
+
+        <form id="order-form">
+            <!-- ①利用者基本情報 -->
+            <fieldset>
+                <legend>① 利用者基本情報</legend>
+                <div class="form-group">
+                    <label>利用者氏名</label>
+                    <input type="text" name="userName" required>
+                </div>
+                <div class="form-group">
+                    <label>介護度</label>
+                    <select name="careLevel">
+                        <option value="要支援1">要支援1</option>
+                        <option value="要支援2">要支援2</option>
+                        <option value="要介護1">要介護1</option>
+                        <option value="要介護2">要介護2</option>
+                        <option value="要介護3">要介護3</option>
+                        <option value="要介護4">要介護4</option>
+                        <option value="要介護5">要介護5</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>担当ケアマネ</label>
+                    <input type="text" name="careManager">
+                </div>
+            </fieldset>
+
+            <!-- ②主疾患と③症状を横に並べるコンテナ (印刷時のみ有効) -->
+            <div class="flex-container">
+                <!-- ②主疾患 -->
+                <fieldset class="flex-item">
+                    <legend>② 主疾患（複数選択可）</legend>
+                    <div class="checkbox-grid">
+                        <label><input type="checkbox" name="disease" value="脳血管疾患"> 脳血管疾患</label>
+                        <label><input type="checkbox" name="disease" value="運動器疾患"> 運動器疾患</label>
+                        <label><input type="checkbox" name="disease" value="神経系疾患"> 神経系疾患</label>
+                        <label><input type="checkbox" name="disease" value="糖尿病"> 糖尿病</label>
+                        <label><input type="checkbox" name="disease" value="高血圧"> 高血圧</label>
+                        <label><input type="checkbox" name="disease" value="便秘症"> 便秘症</label>
+                        <label><input type="checkbox" name="disease" value="呼吸器疾患"> 呼吸器疾患</label>
+                        <label><input type="checkbox" name="disease" value="頻尿・尿漏れ"> 頻尿・尿漏れ</label>
+                        <label><input type="checkbox" name="disease" value="その他"> その他</label>
+                    </div>
+                </fieldset>
+
+                <!-- ③症状 -->
+                <fieldset class="flex-item">
+                    <legend>③ 症状</legend>
+                    <div class="symptom-section">
+                        <h4>麻痺</h4>
+                        <div class="checkbox-grid compact">
+                            <label><input type="checkbox" name="symptom" value="麻痺:右手"> 右手</label>
+                            <label><input type="checkbox" name="symptom" value="麻痺:左手"> 左手</label>
+                            <label><input type="checkbox" name="symptom" value="麻痺:右足"> 右足</label>
+                            <label><input type="checkbox" name="symptom" value="麻痺:左足"> 左足</label>
+                        </div>
+                        <h4>痛み</h4>
+                        <div class="checkbox-grid compact">
+                            <label><input type="checkbox" name="symptom" value="痛み:頚部"> 頚部</label>
+                            <label><input type="checkbox" name="symptom" value="痛み:肩"> 肩</label>
+                            <label><input type="checkbox" name="symptom" value="痛み:肘"> 肘</label>
+                            <label><input type="checkbox" name="symptom" value="痛み:手首"> 手首</label>
+                            <label><input type="checkbox" name="symptom" value="痛み:腰部"> 腰部</label>
+                            <label><input type="checkbox" name="symptom" value="痛み:股関節"> 股関節</label>
+                            <label><input type="checkbox" name="symptom" value="痛み:膝"> 膝</label>
+                            <label><input type="checkbox" name="symptom" value="痛み:足首"> 足首</label>
+                        </div>
+                    </div>
+                </fieldset>
+            </div>
+
+            <!-- ④医師からの運動制限 -->
+            <fieldset>
+                <legend>④ 医師からの運動制限</legend>
+                <div class="radio-group">
+                    <label><input type="radio" name="restriction" value="あり"> あり</label>
+                    <label><input type="radio" name="restriction" value="なし" checked> なし</label>
+                    <label><input type="radio" name="restriction" value="わからない"> わからない</label>
+                </div>
+                <textarea name="restrictionDetail" placeholder="制限内容を入力してください"></textarea>
+            </fieldset>
+
+            <!-- ⑤目標 -->
+            <fieldset>
+                <legend>⑤ 目標</legend>
+                <table class="goal-table">
+                    <thead>
+                        <tr>
+                            <th>チェック</th>
+                            <th>コース</th>
+                            <th>目標</th>
+                            <th>優先順位</th>
+                        </tr>
+                    </thead>
+                    <tbody id="goal-table-body">
+                        <!-- script.js で自動生成 -->
+                    </tbody>
+                </table>
+            </fieldset>
+
+            <!-- ⑥情報共有事項 -->
+            <fieldset>
+                <legend>⑥ 情報共有事項</legend>
+                <textarea name="infoSharing" placeholder="性格、拒否傾向、集団苦手など"></textarea>
+            </fieldset>
+
+            <!-- ⑦職員記入欄 -->
+            <fieldset>
+                <legend>⑦ 職員記入欄</legend>
+                <textarea name="staffComment"></textarea>
+            </fieldset>
+
+            <div class="form-actions no-print">
+                <button type="button" class="btn-save" onclick="app.saveOrder()">保存 / 更新</button>
+                <button type="button" class="btn-print" onclick="window.print()">印刷</button>
+                <button type="button" class="btn-csv" onclick="app.exportSingleCSV()">CSV出力</button>
+                <button type="button" class="btn-print-blank" onclick="app.printBlank()">記入用印刷</button>
+                <button type="button" class="btn-delete" id="delete-btn" onclick="app.deleteOrder()">削除</button>
+            </div>
+        </form>
+    </section>
+
+    <script src="script.js"></script>
+</body>
+</html>
+const app = {
+    patients: JSON.parse(localStorage.getItem('reha_patients')) || [],
+    currentUserId: null,
+    currentOrderId: null,
+    PASSWORD: "0601",
+
+    init() {
+        this.renderGoalTable();
+        this.showMenu();
+    },
+
+    // 画面遷移管理
+    showScreen(screenId) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+        document.getElementById(screenId).classList.remove('hidden');
+        window.scrollTo(0, 0);
+    },
+
+    showMenu() { this.showScreen('menu-screen'); },
+
+    // 検索アクセス制限
+    requestListAccess() {
+        document.getElementById('password-modal').classList.remove('hidden');
+        const input = document.getElementById('list-pass');
+        input.value = '';
+        input.focus();
+    },
+
+    closeModal() { document.getElementById('password-modal').classList.add('hidden'); },
+
+    checkListPassword() {
+        const pass = document.getElementById('list-pass').value;
+        if (pass === this.PASSWORD) {
+            this.closeModal();
+            this.showList();
+        } else {
+            alert('パスワードが正しくありません');
+        }
+    },
+
+    // 利用者一覧
+    showList() {
+        this.showScreen('list-screen');
+        this.renderList();
+    },
+
+    renderList() {
+        const query = document.getElementById('search-input').value.toLowerCase();
+        const container = document.getElementById('user-list-container');
+        container.innerHTML = '';
+        this.patients.filter(p => p.name.includes(query)).forEach(p => {
+            const div = document.createElement('div');
+            div.className = 'card';
+            div.innerHTML = `
+                <div><strong>${p.name}</strong> (${p.careLevel})</div>
+                <button onclick="app.showChart('${p.id}')">カルテを開く</button>
+            `;
+            container.appendChild(div);
+        });
+    },
+
+    // 履歴（カルテ）画面
+    showChart(userId) {
+        this.currentUserId = userId;
+        const patient = this.patients.find(p => p.id === userId);
+        this.showScreen('chart-screen');
+        document.getElementById('chart-user-name').innerText = `${patient.name} 様`;
+        document.getElementById('user-info-summary').innerHTML = `
+            <div style="font-size:1.1em;">
+                <b>介護度:</b> ${patient.careLevel} <br>
+                <b>担当ケアマネ:</b> ${patient.careManager || '未設定'}
+            </div>
+        `;
+        
+        const historyContainer = document.getElementById('history-container');
+        historyContainer.innerHTML = '';
+        patient.orders.slice().reverse().forEach(order => {
+            const div = document.createElement('div');
+            div.className = 'card';
+            div.innerHTML = `
+                <div>作成日: ${order.date}</div>
+                <button onclick="app.editOrder('${patient.id}', '${order.id}')">表示・編集</button>
+            `;
+            historyContainer.appendChild(div);
+        });
+    },
+
+    // オーダー入力フォーム
+    showOrderForm(isNew = true) {
+        if (isNew) { 
+            this.currentUserId = (this.currentUserId) ? this.currentUserId : null; 
+            this.currentOrderId = null; 
+        }
+        this.showScreen('order-screen');
+        const form = document.getElementById('order-form');
+        form.reset();
+        this.renderGoalTable();
+        document.getElementById('delete-btn').classList.toggle('hidden', isNew);
+        
+        if (this.currentUserId) {
+            const p = this.patients.find(x => x.id === this.currentUserId);
+            form.userName.value = p.name;
+            form.careLevel.value = p.careLevel;
+            form.careManager.value = p.careManager;
+        }
+    },
+
+    editOrder(userId, orderId) {
+        this.currentUserId = userId;
+        this.currentOrderId = orderId;
+        this.showOrderForm(false);
+        const patient = this.patients.find(p => p.id === userId);
+        const order = patient.orders.find(o => o.id === orderId);
+        const form = document.getElementById('order-form');
+        
+        form.userName.value = patient.name;
+        form.careLevel.value = patient.careLevel;
+        form.careManager.value = patient.careManager;
+        
+        order.diseases.forEach(d => { const cb = form.querySelector(`input[value="${d}"]`); if(cb) cb.checked = true; });
+        order.symptoms.forEach(s => { const cb = form.querySelector(`input[value="${s}"]`); if(cb) cb.checked = true; });
+        form.restriction.value = order.restriction;
+        form.restrictionDetail.value = order.restrictionDetail;
+        form.infoSharing.value = order.infoSharing;
+        form.staffComment.value = order.staffComment;
+        
+        order.goals.forEach((g, i) => {
+            const row = document.querySelectorAll('#goal-table-body tr')[i];
+            row.querySelector('input[type="checkbox"]').checked = g.checked;
+            row.querySelector('select').value = g.priority;
+            if(row.querySelector('input[type="text"]')) row.querySelector('input[type="text"]').value = g.goal;
+        });
+    },
+
+    // 保存
+    saveOrder() {
+        const form = document.getElementById('order-form');
+        const name = form.userName.value;
+        if (!name) return alert('氏名を入力してください');
+
+        const orderData = {
+            id: this.currentOrderId || Date.now().toString(),
+            date: new Date().toLocaleDateString('ja-JP'),
+            diseases: Array.from(form.querySelectorAll('input[name="disease"]:checked')).map(cb => cb.value),
+            symptoms: Array.from(form.querySelectorAll('input[name="symptom"]:checked')).map(cb => cb.value),
+            restriction: form.restriction.value,
+            restrictionDetail: form.restrictionDetail.value,
+            infoSharing: form.infoSharing.value,
+            staffComment: form.staffComment.value,
+            goals: Array.from(document.querySelectorAll('#goal-table-body tr')).map(tr => ({
+                course: tr.cells[1].innerText,
+                goal: tr.cells[2].innerText || tr.cells[2].querySelector('input')?.value || "",
+                checked: tr.cells[0].querySelector('input').checked,
+                priority: tr.cells[3].querySelector('select').value
+            }))
+        };
+
+        let patient = this.patients.find(p => p.name === name);
+        if (!patient) {
+            patient = { id: Date.now().toString(), name, careLevel: form.careLevel.value, careManager: form.careManager.value, orders: [] };
+            this.patients.push(patient);
+        } else {
+            patient.careLevel = form.careLevel.value;
+            patient.careManager = form.careManager.value;
+        }
+
+        if (this.currentOrderId) {
+            const idx = patient.orders.findIndex(o => o.id === this.currentOrderId);
+            patient.orders[idx] = orderData;
+        } else {
+            patient.orders.push(orderData);
+        }
+
+        localStorage.setItem('reha_patients', JSON.stringify(this.patients));
+        alert('データを保存しました');
+        this.showMenu();
+    },
+
+    // CSVエクスポート関連
+    exportCSV(rows, filename) {
+        const BOM = "\uFEFF";
+        const content = rows.map(r => r.map(v => `"${(v||"").toString().replace(/"/g, '""')}"`).join(",")).join("\n");
+        const blob = new Blob([BOM + content], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url; a.download = filename; a.click();
+    },
+
+    // リハブクラウド用10カラムCSV
+    getCSVRow(patient, order) {
+        const checkedGoals = order.goals.filter(g => g.checked);
+        return [
+            patient.name,
+            patient.careLevel,
+            patient.careManager,
+            order.diseases.join(" / "),
+            order.symptoms.join(" / "),
+            order.restriction + (order.restrictionDetail ? ": " + order.restrictionDetail : ""),
+            checkedGoals.map(g => g.course + (g.goal ? `(${g.goal})` : "")).join(" / "),
+            checkedGoals.map(g => g.priority).join(" / "),
+            order.infoSharing,
+            order.staffComment
+        ];
+    },
+
+    exportSingleCSV() {
+        const form = document.getElementById('order-form');
+        const header = ["利用者名", "介護度", "担当ケアマネ", "主疾患", "症状", "運動制限", "目標", "優先順位", "情報共有事項", "職員記入"];
+        // 現在のフォーム状態から仮想のorderオブジェクトを作成
+        const tempOrder = {
+            diseases: Array.from(form.querySelectorAll('input[name="disease"]:checked')).map(cb => cb.value),
+            symptoms: Array.from(form.querySelectorAll('input[name="symptom"]:checked')).map(cb => cb.value),
+            restriction: form.restriction.value,
+            restrictionDetail: form.restrictionDetail.value,
+            infoSharing: form.infoSharing.value,
+            staffComment: form.staffComment.value,
+            goals: Array.from(document.querySelectorAll('#goal-table-body tr')).map(tr => ({
+                course: tr.cells[1].innerText,
+                goal: tr.cells[2].innerText || tr.cells[2].querySelector('input')?.value || "",
+                checked: tr.cells[0].querySelector('input').checked,
+                priority: tr.cells[3].querySelector('select').value
+            }))
+        };
+        const row = this.getCSVRow({name: form.userName.value, careLevel: form.careLevel.value, careManager: form.careManager.value}, tempOrder);
+        this.exportCSV([header, row], `rehab_cloud_${form.userName.value}.csv`);
+    },
+
+    exportAllCSV() {
+        const header = ["利用者名", "介護度", "担当ケアマネ", "主疾患", "症状", "運動制限", "目標", "優先順位", "情報共有事項", "職員記入"];
+        const rows = [header];
+        this.patients.forEach(p => {
+            p.orders.forEach(o => {
+                rows.push(this.getCSVRow(p, o));
+            });
+        });
+        this.exportCSV(rows, "rehab_cloud_all_data.csv");
+    },
+
+    // 補助機能
+    renderGoalTable() {
+        const goals = [
+            ["バランスアップ・転倒予防コース", "転ばない体をつくりたい"],
+            ["歩行能力向上コース", "歩く力を良くしたい"],
+            ["立ち座り強化コース", "立ち上がりを楽にしたい"],
+            ["体力・活動性向上コース", "体力・筋力をつけたい"],
+            ["手指巧緻性アップコース", "手先を動かしたい"],
+            ["応用歩行強化コース", "階段昇降や屋外歩行"],
+            ["家事動作練習コース", "家事を続けたい"],
+            ["脳トレ強化コース", "物忘れ予防"],
+            ["その他", ""]
+        ];
+        const tbody = document.getElementById('goal-table-body');
+        tbody.innerHTML = '';
+        goals.forEach(g => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><input type="checkbox"></td>
+                <td>${g[0]}</td>
+                <td class="goal-text">${g[1] || '<input type="text" placeholder="自由入力">'}</td>
+                <td><select><option value="">-</option><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></td>
+            `;
+            tbody.appendChild(tr);
+        });
+    },
+
+    backFromOrder() {
+        if (this.currentUserId) this.showChart(this.currentUserId);
+        else this.showMenu();
+    },
+
+    deleteOrder() {
+        if (!confirm('このオーダーデータを完全に削除してもよろしいですか？')) return;
+        const patient = this.patients.find(p => p.id === this.currentUserId);
+        patient.orders = patient.orders.filter(o => o.id !== this.currentOrderId);
+        localStorage.setItem('reha_patients', JSON.stringify(this.patients));
+        this.showMenu();
+    },
+
+    printBlank() {
+        if (confirm('入力内容をクリアして、手書き用の空白シートを印刷しますか？')) {
+            const form = document.getElementById('order-form');
+            form.reset();
+            
+            // 介護度のデフォルト選択を空にする(印刷時のみ)
+            const careLevelSelect = form.querySelector('select[name="careLevel"]');
+            const originalValue = careLevelSelect.value;
+            const emptyOption = document.createElement('option');
+            emptyOption.value = "";
+            emptyOption.text = "";
+            careLevelSelect.add(emptyOption, 0);
+            careLevelSelect.value = "";
+
+            // ラジオボタンの「なし」の初期チェックを外す
+            const defaultRadio = form.querySelector('input[name="restriction"][value="なし"]');
+            if (defaultRadio) defaultRadio.checked = false;
+
+            this.renderGoalTable();
+            window.print();
+            
+            // 印刷後に元に戻す
+            careLevelSelect.remove(0);
+            if (defaultRadio) defaultRadio.checked = true;
+            alert('印刷後は再入力、または履歴から呼び出してください。');
+        }
+    }
+};
+
+app.init();
+:root {
+    --primary-color: #2c3e50;
+    --accent-color: #27ae60;
+    --danger-color: #e74c3c;
+    --bg-color: #f4f7f6;
+    --card-bg: #ffffff;
+}
+
+body {
+    font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
+    margin: 0; padding: 0; background-color: var(--bg-color); color: var(--primary-color);
+    font-size: 18px;
+}
+
+.hidden { display: none !important; }
+
+/* メインメニュー */
+.login-container {
+    max-width: 500px;
+    margin: 60px auto;
+    padding: 40px;
+    background: var(--card-bg);
+    border-radius: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.menu-grid {
+    display: grid; grid-template-columns: 1fr; gap: 20px; margin-top: 30px;
+}
+
+.btn-main {
+    height: 150px; font-size: 22px; border-radius: 15px; border: none; cursor: pointer;
+    transition: opacity 0.2s; font-weight: bold;
+}
+
+.btn-main span { font-size: 40px; display: block; margin-bottom: 10px; }
+.btn-new { background-color: var(--accent-color); color: white; }
+.btn-search { background-color: #34495e; color: white; }
+
+/* モーダル */
+.modal {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 1000;
+}
+
+.modal-content {
+    background: white; padding: 30px; border-radius: 15px; width: 90%; max-width: 400px; text-align: center;
+}
+
+.modal-btns { display: flex; gap: 10px; margin-top: 20px; }
+.modal-btns button { flex: 1; }
+.btn-cancel { background: #95a5a6; color: white; }
+
+/* 共通UI */
+.screen { max-width: 900px; margin: 0 auto; padding: 20px; }
+
+header {
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 3px solid var(--primary-color); margin-bottom: 20px; padding-bottom: 10px;
+}
+
+input[type="password"], input[type="text"], select, textarea {
+    width: 100%; padding: 15px; margin: 10px 0; border: 2px solid #ddd; border-radius: 8px; font-size: 18px; box-sizing: border-box;
+}
+
+button { padding: 15px 25px; font-size: 18px; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; }
+
+.card {
+    background: var(--card-bg); padding: 20px; margin-bottom: 15px; border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center;
+}
+
+/* フォーム・テーブル */
+fieldset { border: 2px solid #ddd; border-radius: 12px; margin-bottom: 25px; padding: 20px; background: #fff; }
+legend { font-weight: bold; padding: 0 10px; color: var(--primary-color); }
+
+.checkbox-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; }
+input[type="checkbox"], input[type="radio"] { width: 30px; height: 30px; margin-right: 15px; }
+
+.goal-table { width: 100%; border-collapse: collapse; background: #fff; }
+.goal-table th, .goal-table td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+
+.form-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 30px; }
+.form-actions .btn-save { grid-column: span 2; background-color: var(--accent-color); color: white; }
+.btn-print { background-color: #3498db; color: white; }
+.btn-csv { background-color: #f39c12; color: white; }
+.btn-delete { background-color: var(--danger-color); color: white; }
+
+/* 印刷用設定 */
+.only-print { display: none; }
+
+/* 2カラムレイアウト用の設定 */
+.flex-container {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 0;
+}
+.flex-item {
+    flex: 1;
+}
+
+@media print {
+    @page {
+        size: A4;
+        margin: 8mm 10mm; /* 上下左右の余白をバランスよく設定 */
+    }
+    .no-print, .modal { display: none !important; }
+    
+    .only-print { 
+        display: block !important; 
+        text-align: center; 
+        margin-bottom: 12px; 
+        border-bottom: 2px solid #000;
+        padding-bottom: 5px;
+    }
+    .only-print h1 { font-size: 18px; margin: 0; }
+    .only-print h2 { font-size: 16px; margin: 4px 0; }
+
+    body { background: #fff; font-size: 13px; line-height: 1.3; }
+    .screen { max-width: 100%; padding: 0; margin: 0; }
+
+    fieldset { 
+        border: 1px solid #000; 
+        margin-bottom: 15px; /* 項目間の余白を広げてバランス調整 */
+        padding: 10px; 
+        break-inside: avoid; 
+    }
+    legend { font-size: 14px; font-weight: bold; padding: 0 5px; }
+
+    .flex-container {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 0;
+    }
+
+    .checkbox-grid { 
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 4px 10px; 
+        margin-top: 5px; 
+    }
+    
+    h4 { margin: 5px 0 2px 0; font-size: 13px; border-bottom: 1px solid #ddd; }
+
+    input[type="checkbox"], input[type="radio"] { width: 16px; height: 16px; margin-right: 6px; }
+
+    .goal-table { margin-top: 5px; width: 100%; }
+    .goal-table th, .goal-table td { padding: 5px; font-size: 12px; border: 1px solid #000; }
+
+    /* 下部の余白を埋めるためにテキストエリアを大きく広げる */
+    textarea { 
+        min-height: 100px; /* ここを広げて下部の余白を調整 */
+        border: 1px solid #000 !important; 
+        font-size: 13px;
+        margin-top: 5px;
+        overflow: hidden;
+        resize: none;
+    }
+
+    /* 運動制限のメモは他のバランスを見て調整 */
+    fieldset:nth-of-type(3) textarea {
+        min-height: 60px;
+    }
+
+    /* 基本情報 */
+    .form-group { display: inline-block; margin-right: 20px; margin-bottom: 5px; }
+    .form-group label { display: inline; font-weight: bold; }
+    .form-group input, .form-group select { 
+        width: auto !important; 
+        border: none !important; 
+        border-bottom: 1px solid #000 !important;
+        padding: 2px 5px !important;
+    }
+
+    input::placeholder, textarea::placeholder { color: transparent !important; }
+
+    input[type="text"], select {
+        border: 1px solid #000 !important;
+        background: transparent !important;
+        padding: 4px !important;
+    }
+    select { background-image: none !important; -webkit-appearance: none; appearance: none; }
+}
+
+@media (max-width: 600px) {
+    .checkbox-grid { grid-template-columns: 1fr 1fr; }
+    .form-actions { grid-template-columns: 1fr; }
+}
